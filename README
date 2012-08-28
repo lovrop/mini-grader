@@ -9,7 +9,7 @@ In the above example, mini-grader might:
 * Run ./twofive.exe on all 20 test cases
 * Enforce a time limit of 1 second (configurable)
 * Enforce a memory limit of 256 MB (configurable)
-* Produces cute coloured output
+* Produce cute coloured output
 
 Requirements:
 * Python 3.2 or newer
