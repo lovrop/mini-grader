@@ -1,6 +1,5 @@
+import platform_dependent
 import tempfile
-
-import runlib
 
 class Runner:
     '''Runs the executable on a single test case and grades the output.'''
@@ -30,7 +29,7 @@ class Runner:
         with open(self.inpath, 'rb') as infile:
             with tempfile.TemporaryFile() as outfile:
                 self.status = Runner.RUNNING
-                self.lpopen = runlib.lPopen(self.executable, stdin=infile, stdout=outfile)
+                self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile)
                 self.lpopen.lwait(tlimit=time_limit*100, mlimit=memory_limit*1024)
                 self.status = Runner.CHECKING
                 infile.seek(0)
