@@ -2,6 +2,7 @@
 
 import argparse
 import multiprocessing
+import platform_dependent
 import re
 import sys
 
@@ -38,7 +39,7 @@ def parse():
                              'executable name and/or current directory)')
     parser.add_argument('--threads',
                         dest='nthreads',
-                        default=multiprocessing.cpu_count(),
+                        default=platform_dependent.cpu_count(),
                         type=int,
                         help='run this many test cases in parallel (default is CPU count)')
     parser.add_argument('--verbose',
