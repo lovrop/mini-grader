@@ -1,5 +1,6 @@
-import platform_dependent
 import tempfile
+
+from . import platform_dependent
 
 class Runner:
     '''Runs the executable on a single test case and grades the output.'''

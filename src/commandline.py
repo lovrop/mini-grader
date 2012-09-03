@@ -2,9 +2,10 @@
 
 import argparse
 import multiprocessing
-import platform_dependent
 import re
 import sys
+
+from . import platform_dependent
 
 DESCRIPTION = (
     'Mini grader for programming competition tasks, especially for contests with downloadable ' +

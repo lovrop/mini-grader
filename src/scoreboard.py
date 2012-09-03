@@ -1,7 +1,7 @@
 import time
 
-from clint.textui import colored
-from runner import Runner
+from .clint.textui import colored
+from .runner import Runner
 
 class Scoreboard:
     '''Monitors the results of individual test cases and display their status.'''
