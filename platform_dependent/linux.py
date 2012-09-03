@@ -1,5 +1,6 @@
 import os
 import re
+import resource
 import sys
 import time
 
@@ -73,6 +74,12 @@ class lPopen (Popen):
         self.timeout = False
         self.memout = False
         self.path = args[0]
+
+        # Raise stack limit as high as it goes (hopefully unlimited)
+        soft, hard = resource.getrlimit(resource.RLIMIT_STACK)
+        resource.setrlimit(resource.RLIMIT_STACK, (hard, hard))
+
+        # Now start the process
         Popen.__init__(self, *args, **keywords)
 
     def lwait (self, tlimit, mlimit):
