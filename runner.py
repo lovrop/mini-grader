@@ -30,7 +30,7 @@ class Runner:
             with tempfile.TemporaryFile() as outfile:
                 self.status = Runner.RUNNING
                 self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile)
-                self.lpopen.lwait(tlimit=time_limit*100, mlimit=memory_limit*1024)
+                self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
                 self.status = Runner.CHECKING
                 infile.seek(0)
                 outfile.seek(0)

@@ -20,8 +20,8 @@ class Scoreboard:
             print()
 
     def write_row(self, infile, runner):
-        time = runner.get_time() / 100
-        memory = int(runner.get_memory() / 1024)
+        time = runner.get_time()
+        memory = int(runner.get_memory() / 1048576)
 
         memstr = ''
         if memory:

@@ -21,7 +21,7 @@ def parse():
                         help='full run, with test data in specified directory')
     parser.add_argument('-m', '--memory-limit',
                         action=StoreMemoryLimitAction,
-                        default=256,
+                        default=256 * 2**20,
                         metavar='MEM',
                         help="memory limit e.g. '256M' or '0.25G' (default is 256M)")
     parser.add_argument('-t', '--time-limit',
@@ -57,5 +57,7 @@ class StoreMemoryLimitAction(argparse.Action):
         num = float(match.group(1))
         suffix = match.group(2)
         if suffix.lower() == 'g':
-            num *= 1024
+            num *= 2**30
+        elif suffix.lower() == 'm':
+            num *= 2**20
         setattr(namespace, self.dest, num)

@@ -53,13 +53,13 @@ class lPopen (Popen):
         procstat = self._wrapped_read('/proc/%d/stat' % self.pid)
         if procstat is not None:
             stats = procstat.split(")")[1].split()
-            self.time = max(self.time, int(stats[11]) + int(stats[12]))
+            self.time = max(self.time, int(stats[11]) + int(stats[12])) / 100
 
         procstatus = self._wrapped_read('/proc/%d/status' % self.pid)
         if procstatus is not None:
             tokens = procstatus.split()
             try:
-                self.vmpeak = int(tokens[tokens.index("VmPeak:")+1])
+                self.vmpeak = int(tokens[tokens.index("VmPeak:")+1]) * 1024
             except ValueError: # No entries
                 pass
             
