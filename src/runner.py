@@ -1,3 +1,5 @@
+import os
+import shutil
 import tempfile
 
 from . import platform_dependent
@@ -17,20 +19,30 @@ class Runner:
     CHECKING = 3
     DONE = 4
     
-    def __init__(self, executable, inpath, refoutpath, checker):
+    def __init__(self, task_name, executable, inpath, refoutpath, checker, usaco_style_io):
+        self.task_name = task_name
         self.executable = executable
         self.inpath = inpath
         self.refoutpath = refoutpath
         self.checker = checker
+        self.usaco_style_io = usaco_style_io
         
         self.lpopen = None
         self.status = Runner.WAITING
 
     def run(self, time_limit, memory_limit):
+        if not self.usaco_style_io:
+            self._run_with_normal_io(time_limit, memory_limit)
+        else:
+            self._run_with_usaco_io(time_limit, memory_limit)
+
+    def _run_with_normal_io(self, time_limit, memory_limit):
+        # Normally, I/O goes through standard streams.  Open the input file
+        # for stdin and a temporary file for stdout.
         with open(self.inpath, 'rb') as infile:
             with tempfile.TemporaryFile() as outfile:
-                self.status = Runner.RUNNING
                 self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile)
+                self.status = Runner.RUNNING
                 self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
                 self.status = Runner.CHECKING
                 infile.seek(0)
@@ -38,6 +50,22 @@ class Runner:
                 with open(self.refoutpath, 'rb') as refout:
                     self.grade(infile, outfile, refout)
                 self.status = Runner.DONE
+
+    def _run_with_usaco_io(self, time_limit, memory_limit):
+        # In USACO-style tasks, the executable opens TASK.in and TASK.out
+        # itself.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            shutil.copy(self.inpath, os.path.join(tmpdir, self.task_name + '.in'))
+            outpath = os.path.join(tmpdir, self.task_name + '.out')
+            self.lpopen = platform_dependent.lPopen(os.path.realpath(self.executable), cwd=tmpdir)
+            self.status = Runner.RUNNING
+            self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
+            self.status = Runner.CHECKING
+            with open(self.inpath, 'rb') as infile:
+                with open(outpath, 'rb') as outfile:
+                    with open(self.refoutpath, 'rb') as refout:
+                        self.grade(infile, outfile, refout)
+            self.status = Runner.DONE
 
     def grade(self, infile, outfile, refout):
         if self.lpopen.timeout:

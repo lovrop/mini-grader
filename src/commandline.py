@@ -43,6 +43,10 @@ def parse():
                         default=platform_dependent.cpu_count(),
                         type=int,
                         help='run this many test cases in parallel (default is CPU count)')
+    parser.add_argument('--usaco',
+                        dest='usaco_style_io',
+                        action='store_true',
+                        help='USACO-style input/output, through files named TASK.in and TASK.out')
     parser.add_argument('--verbose',
                         action='store_true',
                         help='output informational messages')

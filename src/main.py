@@ -38,7 +38,12 @@ def main():
         infilepath = os.path.join(search_result.dirpath, iname)
         outfilepath = os.path.join(search_result.dirpath, oname)
         checker = checkers.DiffChecker()
-        runner = Runner(args.executable, infilepath, outfilepath, checker)
+        runner = Runner(search_result.task,
+                        args.executable,
+                        infilepath,
+                        outfilepath,
+                        checker,
+                        args.usaco_style_io)
         future = executor.submit(runner.run, args.time_limit, args.memory_limit)
         scoreboard.add(iname, runner, future)
 
