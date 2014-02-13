@@ -16,20 +16,20 @@ def parse():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('executable',
                         help='path to executable')
-    
+
     parser.add_argument('-D', '--test-data-dir',
                         metavar='DIR',
                         help='full run, with test data in specified directory')
     parser.add_argument('-m', '--memory-limit',
                         action=StoreMemoryLimitAction,
-                        default=256 * 2**20,
+                        default=sys.maxsize,
                         metavar='MEM',
-                        help="memory limit e.g. '256M' or '0.25G' (default is 256M)")
+                        help="memory limit e.g. '256M' or '0.25G' (default is unlimited)")
     parser.add_argument('-t', '--time-limit',
-                        default=1,
+                        default=sys.maxsize,
                         metavar='SECONDS',
                         type=float,
-                        help='time limit in seconds (default is 1)')
+                        help='time limit in seconds (default is unlimited)')
 
     parser.add_argument('--examples-only',
                         dest='example_run',

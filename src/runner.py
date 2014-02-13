@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import tempfile
 
 from . import platform_dependent
@@ -18,7 +19,7 @@ class Runner:
     RUNNING = 2
     CHECKING = 3
     DONE = 4
-    
+
     def __init__(self, task_name, executable, inpath, refoutpath, checker, usaco_style_io):
         self.task_name = task_name
         self.executable = executable
@@ -26,7 +27,7 @@ class Runner:
         self.refoutpath = refoutpath
         self.checker = checker
         self.usaco_style_io = usaco_style_io
-        
+
         self.lpopen = None
         self.status = Runner.WAITING
 
@@ -41,7 +42,7 @@ class Runner:
         # for stdin and a temporary file for stdout.
         with open(self.inpath, 'rb') as infile:
             with tempfile.TemporaryFile() as outfile:
-                self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile)
+                self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile, stderr=subprocess.DEVNULL)
                 self.status = Runner.RUNNING
                 self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
                 self.status = Runner.CHECKING
@@ -57,7 +58,7 @@ class Runner:
         with tempfile.TemporaryDirectory() as tmpdir:
             shutil.copy(self.inpath, os.path.join(tmpdir, self.task_name + '.in'))
             outpath = os.path.join(tmpdir, self.task_name + '.out')
-            self.lpopen = platform_dependent.lPopen(os.path.realpath(self.executable), cwd=tmpdir)
+            self.lpopen = platform_dependent.lPopen(os.path.realpath(self.executable), cwd=tmpdir, stderr=subprocess.DEVNULL)
             self.status = Runner.RUNNING
             self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
             self.status = Runner.CHECKING

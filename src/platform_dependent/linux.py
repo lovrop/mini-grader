@@ -8,7 +8,7 @@ from subprocess import Popen, PIPE
 from signal import SIGTERM
 
 def cpu_count():
-    '''Linux-specific implementation that ries to figure out the number of physical cores from /proc/cpuinfo.''' 
+    '''Linux-specific implementation that tries to figure out the number of physical cores from /proc/cpuinfo.'''
     result = None
     try:
         with open('/proc/cpuinfo', 'r') as cpuinfo:
@@ -34,9 +34,9 @@ class lPopen (Popen):
 
 
     #
-    # Linux specific methods 
+    # Linux specific methods
     #
-        
+
     def _kill (self):
         try: os.kill(self.pid, SIGTERM)
         except: pass
@@ -49,7 +49,7 @@ class lPopen (Popen):
             if e.errno == 2: # File not found
                 return None
             raise
-            
+
     def _refresh_usage (self):
         procstat = self._wrapped_read('/proc/%d/stat' % self.pid)
         if procstat is not None:
@@ -63,11 +63,11 @@ class lPopen (Popen):
                 self.vmpeak = int(tokens[tokens.index("VmPeak:")+1]) * 1024
             except ValueError: # No entries
                 pass
-            
+
     #
     # Generic methods
-    # 
-    
+    #
+
     def __init__ (self, *args, **keywords):
         self.time = 0
         self.vmpeak = 0
