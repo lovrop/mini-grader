@@ -2,7 +2,7 @@
 
 import logging, os, re, sys, time
 
-# Patterns that are matched for all runns
+# Patterns that are matched for all runs
 FULL_PATTERNS = [
     # foo.in.1 foo.out.1 (new Croatian competitions)
     (r'TASK\.in\.(\d+[a-z]*)', r'TASK\.out\.(\d+[a-z]*)'),
@@ -10,12 +10,18 @@ FULL_PATTERNS = [
     (r'TASK\.in([0-9a-z])', r'TASK\.ou([0-9a-z])'),
     # task_1.in task_1.out (IOI 2001)
     (r'TASK_(\d+)\.in', r'TASK_(\d+)\.out'),
+    # 1.in 1.out (USACO)
+    (r'(\d+)\.in', r'(\d+)\.out'),
+    # task-001.in task-001.ans
+    (r'TASK-(.+)\.in', r'TASK-(.+)\.ans'),
     ]
 
 # Patterns that are matched even when --examples-only is used
 EXAMPLE_PATTERNS = [
     # in1 out1
     (r'in(.+)', r'out(.+)'),
+    # task.dummy.in.1 task.dummy.out.1
+    (r'TASK.dummy.in(.+)', r'TASK.dummy.out(.+)'),
     ]
 
 
@@ -25,8 +31,8 @@ def sort_filenames(l):
     """
     import re
     convert = lambda text: int(text) if text.isdigit() else text
-    alphanum_key = lambda file_pair: [ convert(c) for c in re.split('([0-9]+)', file_pair[0]) ] 
-    l.sort(key=alphanum_key) 
+    alphanum_key = lambda file_pair: [ convert(c) for c in re.split('([0-9]+)', file_pair[0]) ]
+    l.sort(key=alphanum_key)
 
 class TestDataSearch:
     def __init__(self,
