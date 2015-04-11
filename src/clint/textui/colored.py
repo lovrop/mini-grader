@@ -27,17 +27,7 @@ __all__ = (
 
 COLORS = __all__[:-2]
 
-if 'get_ipython' in dir():
-    """
-       when ipython is fired lot of variables like _oh, etc are used.
-       There are so many ways to find current python interpreter is ipython.
-       get_ipython is easiest is most appealing for readers to understand.
-    """
-    DISABLE_COLOR = True
-else:
-    DISABLE_COLOR = False
-
-
+ENABLE_COLOR = sys.stdout.isatty()
 
 class ColoredString(object):
     """Enhanced string for __len__ operations on Colored output."""
@@ -48,7 +38,7 @@ class ColoredString(object):
 
     @property
     def color_str(self):
-        if sys.stdout.isatty() and not DISABLE_COLOR:
+        if ENABLE_COLOR:
             return '%s%s%s' % (
                 getattr(colorama.Fore, self.color), self.s, colorama.Fore.RESET)
         else:
@@ -126,8 +116,6 @@ def cyan(string):
 def white(string):
     return ColoredString('WHITE', string)
 
-def disable():
-    """Disables colors."""
-    global DISABLE_COLOR
-
-    DISABLE_COLOR = True
+def setColorEnabled(enabled):
+    global ENABLE_COLOR
+    ENABLE_COLOR = enabled

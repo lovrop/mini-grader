@@ -10,6 +10,7 @@ import time
 
 from . import checkers
 from . import commandline
+from .clint.textui import colored
 from .scoreboard import Scoreboard
 from .runner import Runner
 from .test_data_search import TestDataSearch
@@ -19,6 +20,9 @@ def main():
 
     if args.verbose:
         logging.basicConfig(level=logging.INFO)
+
+    if args.color != 'auto':
+        colored.setColorEnabled(args.color == 'always')
 
     # Look for test data
     test_data_search_dir = args.test_data_dir

@@ -1,3 +1,4 @@
+import sys
 import time
 
 from .clint.textui import colored
@@ -9,9 +10,10 @@ class Scoreboard:
     def __init__(self):
         self.monitors = []
         self.first_column_width = 0
-    
+        self.live_update = sys.stdout.isatty()
+
     def add(self, infile, runner, future):
-        self.monitors.append(SingleRunMonitor(infile, runner, future, self.write_row))
+        self.monitors.append(SingleRunMonitor(infile, runner, future, self.write_row, self.live_update))
         self.first_column_width = max(self.first_column_width, len(infile))
 
     def start(self):
@@ -26,9 +28,10 @@ class Scoreboard:
         memstr = ''
         if memory:
             memstr = '%4dM' % memory
-                     
-        print('\r%-*s | %s | %5.2f | %5s' %
-              (self.first_column_width,
+
+        print('%s%-*s | %s | %5.2f | %5s' %
+              ('\r' if self.live_update else '',
+               self.first_column_width,
                infile,
                self.get_text_status(13, runner),
                time,
@@ -49,7 +52,7 @@ class Scoreboard:
         if runner.status in status_to_color_text:
             return status_to_color_text[runner.status]
         assert runner.status == Runner.DONE
-        
+
         result_to_color_text = {
             Runner.Result.PASSED:        (colored.green, 'Passed'),
             Runner.Result.WRONG_ANSWER:  (colored.red, 'Wrong answer'),
@@ -59,20 +62,22 @@ class Scoreboard:
             }
         return result_to_color_text[runner.result]
 
-    
+
 class SingleRunMonitor:
-    def __init__(self, infile, runner, future, write_row_callback):
+    def __init__(self, infile, runner, future, write_row_callback, live_update):
         self.infile = infile
         self.runner = runner
         self.future = future
         self.write_row_callback = write_row_callback
+        self.live_update = live_update
 
     def update(self):
         self.write_row_callback(self.infile, self.runner)
-        
+
     def run(self):
         while not self.future.done():
-            self.update()
+            if self.live_update:
+                self.update()
             time.sleep(0.1)
         self.update()
         if self.future.exception() is not None:

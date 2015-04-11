@@ -50,6 +50,10 @@ def parse():
     parser.add_argument('--verbose',
                         action='store_true',
                         help='output informational messages')
+    parser.add_argument('--color',
+                        default='auto',
+                        choices=['auto', 'always', 'none'],
+                        help='colored output')
     args = parser.parse_args()
     return args
 
