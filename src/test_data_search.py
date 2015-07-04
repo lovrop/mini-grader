@@ -14,6 +14,8 @@ FULL_PATTERNS = [
     (r'(\d+)\.in', r'(\d+)\.out'),
     # task-001.in task-001.ans
     (r'TASK-(.+)\.in', r'TASK-(.+)\.ans'),
+    # task.1.in task.1.out
+    (r'TASK\.([0-9a-z]+)\.in', r'TASK\.([0-9a-z]+)\.out'),
     ]
 
 # Patterns that are matched even when --examples-only is used
