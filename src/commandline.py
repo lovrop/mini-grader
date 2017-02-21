@@ -38,7 +38,7 @@ def parse():
     parser.add_argument('--task',
                         help='task name, used to search for test data (default is to infer from ' +
                              'executable name and/or current directory)')
-    parser.add_argument('--threads',
+    parser.add_argument('-j', '--threads',
                         dest='nthreads',
                         default=platform_dependent.cpu_count(),
                         type=int,
