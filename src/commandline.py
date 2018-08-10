@@ -22,16 +22,16 @@ def parse():
                         help='full run, with test data in specified directory')
     parser.add_argument('-m', '--memory-limit',
                         action=StoreMemoryLimitAction,
-                        default=sys.maxsize,
+                        default=2**30,
                         metavar='MEM',
-                        help="memory limit e.g. '256M' or '0.25G' (default is unlimited)")
+                        help="memory limit e.g. '256M' or '0.25G' (default is 1G)")
     parser.add_argument('-t', '--time-limit',
                         default=sys.maxsize,
                         metavar='SECONDS',
                         type=float,
                         help='time limit in seconds (default is unlimited)')
 
-    parser.add_argument('--examples-only',
+    parser.add_argument('-x', '--examples-only',
                         dest='example_run',
                         action='store_true',
                         help='consider only example filename patterns for test data')
@@ -50,6 +50,9 @@ def parse():
     parser.add_argument('--verbose',
                         action='store_true',
                         help='output informational messages')
+    parser.add_argument('-w', '--ignore-space',
+                        action='store_true',
+                        help='ignore trailing spaces and empty lines when checking output')
     parser.add_argument('--color',
                         default='auto',
                         choices=['auto', 'always', 'none'],

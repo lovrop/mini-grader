@@ -28,28 +28,30 @@ def main():
     test_data_search_dir = args.test_data_dir
     if test_data_search_dir is None:
         test_data_search_dir = '.'
-    search_result = TestDataSearch(test_data_search_dir,
-                                   args.example_run,
-                                   args.task,
-                                   args.executable).search()
+    tests = TestDataSearch(test_data_search_dir,
+                           args.example_run,
+                           args.task,
+                           args.executable).search()
 
     logging.info('Running %d test cases in parallel', args.nthreads)
     executor = concurrent.futures.ThreadPoolExecutor(args.nthreads)
     scoreboard = Scoreboard()
+    runners = []
     futures = []
 
-    for iname, oname in search_result.tests:
-        infilepath = os.path.join(search_result.dirpath, iname)
-        outfilepath = os.path.join(search_result.dirpath, oname)
-        checker = checkers.DiffChecker()
-        runner = Runner(search_result.task,
+    for test_case in tests:
+        infilepath = os.path.join(test_case.dirpath, test_case.infile)
+        outfilepath = os.path.join(test_case.dirpath, test_case.outfile)
+        runner = Runner(test_case.task,
                         args.executable,
                         infilepath,
                         outfilepath,
-                        checker,
+                        checkers.Checker(),
                         args.usaco_style_io)
         future = executor.submit(runner.run, args.time_limit, args.memory_limit)
-        scoreboard.add(iname, runner, future)
+        scoreboard.add(test_case.infile, runner, future)
+        runners.append(runner)
 
-    scoreboard.start()
+    code = scoreboard.start()
     executor.shutdown()
+    sys.exit(code)

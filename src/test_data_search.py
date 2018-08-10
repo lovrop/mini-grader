@@ -1,30 +1,46 @@
 #!/usr/bin/env python3
+import collections
+import logging
+import os
+import re
+import sys
+import time
 
-import logging, os, re, sys, time
-
-# Patterns that are matched for all runs
-FULL_PATTERNS = [
-    # foo.in.1 foo.out.1 (new Croatian competitions)
-    (r'TASK\.in\.(\d+[a-z]*)', r'TASK\.out\.(\d+[a-z]*)'),
-    # foo.in1 foo.ou1 (old Croatian competitions)
-    (r'TASK\.in([0-9a-z])', r'TASK\.ou([0-9a-z])'),
-    # task_1.in task_1.out (IOI 2001)
-    (r'TASK_(\d+)\.in', r'TASK_(\d+)\.out'),
-    # 1.in 1.out (USACO)
-    (r'(\d+)\.in', r'(\d+)\.out'),
-    # task-001.in task-001.ans
-    (r'TASK-(.+)\.in', r'TASK-(.+)\.ans'),
-    # task.1.in task.1.out
-    (r'TASK\.([0-9a-z]+)\.in', r'TASK\.([0-9a-z]+)\.out'),
-    ]
-
-# Patterns that are matched even when --examples-only is used
+# These are always searched
 EXAMPLE_PATTERNS = [
     # in1 out1
     (r'in(.+)', r'out(.+)'),
     # task.dummy.in.1 task.dummy.out.1
     (r'TASK.dummy.in(.+)', r'TASK.dummy.out(.+)'),
-    ]
+]
+
+# These are omitted when --examples-only is used
+FULL_PATTERNS = [
+    # foo.in.1 foo.out.1 (new Croatian competitions)
+    (r'TASK\.in\.(\d+[a-z]*)',
+     r'TASK\.out\.(\d+[a-z]*)'),
+    # foo.in1 foo.ou1 (old Croatian competitions)
+    (r'TASK\.in([0-9a-z])',
+     r'TASK\.ou([0-9a-z])'),
+    # task_1.in task_1.out (IOI 2001)
+    (r'TASK_(\d+)\.in',
+     r'TASK_(\d+)\.out'),
+    # 1.in 1.out (USACO)
+    (r'(\d+)\.in',
+     r'(\d+)\.out'),
+    # task-001.in task-001.ans
+    (r'TASK-(.+)\.in',
+     r'TASK-(.+)\.ans'),
+    # task.1.in task.1.out
+    (r'TASK\.([0-9a-z]+)\.in',
+     r'TASK\.([0-9a-z]+)\.out'),
+    # C-large.{in,out} (Code Jam)
+    (r'([a-z]-(?:small|large|practice).*)\.in',
+     r'([a-z]-(?:small|large|practice).*)\.out'),
+]
+
+
+TestCase = collections.namedtuple('TestCase', ['task', 'dirpath', 'infile', 'outfile'])
 
 
 def sort_filenames(l):
@@ -33,8 +49,9 @@ def sort_filenames(l):
     """
     import re
     convert = lambda text: int(text) if text.isdigit() else text
-    alphanum_key = lambda file_pair: [ convert(c) for c in re.split('([0-9]+)', file_pair[0]) ]
+    alphanum_key = lambda test_case: [ convert(c) for c in re.split('([0-9]+)', test_case.infile) ]
     l.sort(key=alphanum_key)
+
 
 class TestDataSearch:
     def __init__(self,
@@ -48,10 +65,7 @@ class TestDataSearch:
         self.executable = executable
 
     def search(self):
-        if self.is_example_run:
-            patterns = EXAMPLE_PATTERNS
-        else:
-            patterns = EXAMPLE_PATTERNS + FULL_PATTERNS
+        patterns = EXAMPLE_PATTERNS + ([] if self.is_example_run else FULL_PATTERNS)
         logging.debug('patterns = %s', patterns)
 
         if self.task is None:
@@ -66,27 +80,28 @@ class TestDataSearch:
             tasks_to_try = [self.task]
         logging.debug('tasks_to_try = %s', tasks_to_try)
 
-        best_match = None
+        tests = {}
         for dirpath, _, filenames in os.walk(self.search_dir):
             for task in tasks_to_try:
                 for pattern in patterns:
-                    match = self.one_match(dirpath, filenames, task, pattern)
-                    logging.debug('%s', match.__dict__)
-                    if best_match is None or len(match.tests) > len(best_match.tests):
-                        best_match = match
-        if not best_match or not best_match.tests:
+                    rv = self.search_one_pattern(dirpath, filenames, task, pattern)
+                    logging.debug('pattern {}: {}'.format(pattern[0], rv))
+                    # Some patterns do not depend on the task name so we might
+                    # go through them more than once if we are trying different
+                    # task names.  To deal with this, `tests' is a dict keyed
+                    # by the input file, which will dedup.
+                    for tc in rv:
+                        tests[(tc.dirpath, tc.infile)] = tc
+        tests = list(tests.values())
+        if not tests:
             logging.error('No test data found!')
             sys.exit(1)
-        logging.info('Found %d test cases in %s', len(best_match.tests), best_match.dirpath)
-        logging.info("Task name is '%s'", best_match.task)
-        sort_filenames(best_match.tests)
-        return best_match
+        logging.info('Found %d test cases', len(tests))
+        sort_filenames(tests)
+        return tests
 
-    def one_match(self, dirpath, filenames, task, pattern):
-        result = TestDataSearchMatch()
-        result.dirpath = dirpath
-        result.task = task
-        result.tests = []
+    def search_one_pattern(self, dirpath, filenames, task, pattern):
+        tests = []
         re_in = re.compile(pattern[0].replace('TASK', task) + '$')
         re_out = re.compile(pattern[1].replace('TASK', task) + '$')
         inputs = {}
@@ -99,8 +114,8 @@ class TestDataSearch:
                     break
         for seq, infile in inputs.items():
             if seq in outputs:
-                result.tests.append((infile, outputs[seq]))
-        return result
-
-class TestDataSearchMatch:
-    pass
+                tests.append(TestCase(task=task,
+                                      dirpath=dirpath,
+                                      infile=infile,
+                                      outfile=outputs[seq]))
+        return tests

@@ -60,7 +60,14 @@ class lPopen (Popen):
         if procstatus is not None:
             tokens = procstatus.split()
             try:
-                self.vmpeak = int(tokens[tokens.index("VmPeak:")+1]) * 1024
+                vmpeak = int(tokens[tokens.index("VmPeak:")+1]) * 1024
+                if vmpeak <= 2**40:
+                    self.vmpeak = vmpeak
+                else:
+                    # Probably dealing with an ASAN binary, do not report
+                    # memory usage
+                    self.vmpeak = 0
+
             except ValueError: # No entries
                 pass
 

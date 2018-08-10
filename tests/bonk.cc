@@ -1,10 +1,12 @@
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
 using namespace std;
+#include <unistd.h>
 
 /*
   Command line: ../mini-grader.py -D . ./bonk.exe
-  
+
   Test cases:
 
   1: Passed
@@ -51,27 +53,30 @@ int main() {
 
   switch (testno) {
   case 1:
-    std::cout << 2*testno << "\n";
     break;
 
   case 2:
-    std::cout << 3*testno << "\n";
+    std::cout << "wrong!\n";
     break;
 
   case 3:
     {
-      long long acc = 0;
+      volatile long long acc = 0;
       for (long long i=0; i<1000000000000LL; ++i) {
         acc += i;
       }
-      std::cout << acc << "\n";
+      std::cerr << acc << "\n";
     }
     break;
 
   case 4:
     // Try to allocate 1 GB on the heap
-    for (int iter=0; iter<1024; ++iter) {
-      heap_alloc(1<<20);
+    {
+      uintptr_t ans = 0;
+      for (int iter=0; iter<1024; ++iter) {
+        ans += (uintptr_t)heap_alloc(1<<20);
+      }
+      std::cerr << ans << '\n';
     }
     break;
 
@@ -99,12 +104,12 @@ int main() {
       result += checksum(chunk, 100 * (1<<20));
       delete[] chunk;
     }
-    std::cout << 2*testno << "\n";
     break;
 
   case 8:
     abort();
   }
 
+  std::cout << 2*testno << "\n";
   return 0;
 }

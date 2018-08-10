@@ -2,7 +2,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+import threading
 
+from . import checkers
 from . import platform_dependent
 
 class Runner:
@@ -14,6 +16,7 @@ class Runner:
         TIME_LIMIT = 3
         MEMORY_LIMIT = 4
         RUNTIME_ERROR = 5
+        PRESENTATION_ERROR = 6
 
     WAITING = 1
     RUNNING = 2
@@ -27,6 +30,8 @@ class Runner:
         self.refoutpath = refoutpath
         self.checker = checker
         self.usaco_style_io = usaco_style_io
+        self._aborted = False
+        self._abort_lock = threading.Lock()
 
         self.lpopen = None
         self.status = Runner.WAITING
@@ -37,17 +42,27 @@ class Runner:
         else:
             self._run_with_usaco_io(time_limit, memory_limit)
 
+    def abort(self):
+        with self._abort_lock:
+            self._aborted = True
+            if self.lpopen:
+                self.lpopen.abort()
+
     def _run_with_normal_io(self, time_limit, memory_limit):
         # Normally, I/O goes through standard streams.  Open the input file
         # for stdin and a temporary file for stdout.
         with open(self.inpath, 'rb') as infile:
-            with tempfile.TemporaryFile() as outfile:
-                self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile, stderr=subprocess.DEVNULL)
+            with tempfile.NamedTemporaryFile() as outfile:
+                with self._abort_lock:
+                    if not self._aborted:
+                        self.lpopen = platform_dependent.lPopen(self.executable, stdin=infile, stdout=outfile, stderr=subprocess.DEVNULL)
                 self.status = Runner.RUNNING
                 self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
                 self.status = Runner.CHECKING
                 infile.seek(0)
                 outfile.seek(0)
+                infile.flush()
+                outfile.flush()
                 with open(self.refoutpath, 'rb') as refout:
                     self.grade(infile, outfile, refout)
                 self.status = Runner.DONE
@@ -58,7 +73,9 @@ class Runner:
         with tempfile.TemporaryDirectory() as tmpdir:
             shutil.copy(self.inpath, os.path.join(tmpdir, self.task_name + '.in'))
             outpath = os.path.join(tmpdir, self.task_name + '.out')
-            self.lpopen = platform_dependent.lPopen(os.path.realpath(self.executable), cwd=tmpdir, stderr=subprocess.DEVNULL)
+            with self._abort_lock:
+                if not self._aborted:
+                    self.lpopen = platform_dependent.lPopen(os.path.realpath(self.executable), cwd=tmpdir, stderr=subprocess.DEVNULL)
             self.status = Runner.RUNNING
             self.lpopen.lwait(tlimit=time_limit, mlimit=memory_limit)
             self.status = Runner.CHECKING
@@ -79,8 +96,11 @@ class Runner:
             self.result = self.check_output(infile, outfile, refout)
 
     def check_output(self, infile, outfile, refout):
-        if self.checker.correct(infile, outfile, refout):
+        rv = self.checker.check(infile, outfile, refout)
+        if rv == checkers.CORRECT:
             return Runner.Result.PASSED
+        elif rv == checkers.PRESENTATION_ERROR:
+            return Runner.Result.PRESENTATION_ERROR
         else:
             return Runner.Result.WRONG_ANSWER
 

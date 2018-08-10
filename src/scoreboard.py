@@ -1,3 +1,4 @@
+import signal
 import sys
 import time
 
@@ -17,9 +18,21 @@ class Scoreboard:
         self.first_column_width = max(self.first_column_width, len(infile))
 
     def start(self):
-        while self.monitors:
-            self.monitors.pop(0).run()
+        failures = 0
+        try:
+            while self.monitors:
+                current = self.monitors[0]
+                result = current.run() # synchronous
+                self.monitors.pop(0)
+                if result != Runner.Result.PASSED:
+                    failures += 1
+                print()
+        except KeyboardInterrupt:
+            for monitor in self.monitors:
+                monitor.runner.abort()
             print()
+            return 128 + signal.SIGINT
+        return failures
 
     def write_row(self, infile, runner):
         time = runner.get_time()
@@ -54,11 +67,12 @@ class Scoreboard:
         assert runner.status == Runner.DONE
 
         result_to_color_text = {
-            Runner.Result.PASSED:        (colored.green, 'Passed'),
-            Runner.Result.WRONG_ANSWER:  (colored.red, 'Wrong answer'),
-            Runner.Result.TIME_LIMIT:    (colored.yellow, 'Time limit'),
-            Runner.Result.MEMORY_LIMIT:  (colored.cyan, 'Memory limit'),
-            Runner.Result.RUNTIME_ERROR: (colored.magenta, 'Runtime error'),
+            Runner.Result.PASSED:             (colored.green, 'Passed'),
+            Runner.Result.PRESENTATION_ERROR: (colored.yellow, 'Passed (PE)'),
+            Runner.Result.WRONG_ANSWER:       (colored.red, 'Wrong answer'),
+            Runner.Result.TIME_LIMIT:         (colored.cyan, 'Time limit'),
+            Runner.Result.MEMORY_LIMIT:       (colored.cyan, 'Memory limit'),
+            Runner.Result.RUNTIME_ERROR:      (colored.magenta, 'Runtime error'),
             }
         return result_to_color_text[runner.result]
 
@@ -82,3 +96,4 @@ class SingleRunMonitor:
         self.update()
         if self.future.exception() is not None:
             raise self.future.exception()
+        return self.runner.result
