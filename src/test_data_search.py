@@ -102,8 +102,8 @@ class TestDataSearch:
 
     def search_one_pattern(self, dirpath, filenames, task, pattern):
         tests = []
-        re_in = re.compile(pattern[0].replace('TASK', task) + '$')
-        re_out = re.compile(pattern[1].replace('TASK', task) + '$')
+        re_in = re.compile(pattern[0].replace('TASK', task) + '$', re.IGNORECASE)
+        re_out = re.compile(pattern[1].replace('TASK', task) + '$', re.IGNORECASE)
         inputs = {}
         outputs = {}
         for filename in filenames:
